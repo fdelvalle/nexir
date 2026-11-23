@@ -1,0 +1,356 @@
+{
+  "type": "object",
+  "required": [
+    "module"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "module": {
+      "$ref": "#/$defs/module"
+    }
+  },
+  "$defs": {
+    "typeRef": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 63
+        },
+        {
+          "enum": [
+            "bool",
+            "i64",
+            "text",
+            "bytes"
+          ]
+        }
+      ]
+    },
+    "signature": {
+      "type": "object",
+      "required": [
+        "params",
+        "result"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "params": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/typeRef"
+          },
+          "maxItems": 8
+        },
+        "result": {
+          "$ref": "#/$defs/typeRef"
+        }
+      }
+    },
+    "literal": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "value"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "bool"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "value"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "i64"
+            },
+            "value": {
+              "type": "string",
+              "pattern": "^(0|-?[1-9][0-9]{0,18})$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "value"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "text"
+            },
+            "value": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "value"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "bytes"
+            },
+            "value": {
+              "type": "string",
+              "contentEncoding": "base64",
+              "maxLength": 5464
+            }
+          }
+        }
+      ]
+    },
+    "type": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "entries"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "record",
+                "variant"
+              ]
+            },
+            "entries": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/typeRef"
+              },
+              "maxItems": 8
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "entries"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "handle"
+            },
+            "entries": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 31
+              },
+              "maxItems": 1,
+              "minItems": 1
+            }
+          }
+        }
+      ]
+    },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._]{0,62}$"
+    },
+    "import": {
+      "type": "object",
+      "required": [
+        "interface",
+        "version",
+        "operation",
+        "signature"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "interface": {
+          "$ref": "#/$defs/identifier"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "operation": {
+          "$ref": "#/$defs/identifier"
+        },
+        "signature": {
+          "$ref": "#/$defs/signature"
+        }
+      }
+    },
+    "instruction": {
+      "type": "object",
+      "required": [
+        "op",
+        "args"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "op": {
+          "enum": [
+            "const",
+            "record.new",
+            "record.get",
+            "variant.new",
+            "variant.tag",
+            "variant.get",
+            "i64.add",
+            "i64.sub",
+            "i64.mul",
+            "i64.div",
+            "i64.eq",
+            "i64.lt",
+            "bool.not",
+            "bool.and",
+            "bool.or",
+            "call",
+            "call.cap",
+            "br",
+            "br.if",
+            "return",
+            "trap"
+          ]
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 65535
+          },
+          "maxItems": 19
+        }
+      }
+    },
+    "block": {
+      "type": "object",
+      "required": [
+        "params",
+        "instructions"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "params": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/typeRef"
+          },
+          "maxItems": 8
+        },
+        "instructions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/instruction"
+          },
+          "maxItems": 129,
+          "minItems": 1
+        }
+      }
+    },
+    "function": {
+      "type": "object",
+      "required": [
+        "signature",
+        "blocks"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "signature": {
+          "$ref": "#/$defs/signature"
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/block"
+          },
+          "maxItems": 16,
+          "minItems": 1
+        }
+      }
+    },
+    "export": {
+      "type": "object",
+      "required": [
+        "name",
+        "function"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/identifier"
+        },
+        "function": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 31
+        }
+      }
+    },
+    "module": {
+      "type": "object",
+      "required": [
+        "functions",
+        "exports"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "types": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/type"
+          },
+          "maxItems": 60
+        },
+        "constants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/literal"
+          },
+          "maxItems": 128
+        },
+        "imports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/import"
+          },
+          "maxItems": 32
+        },
+        "functions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/function"
+          },
+          "maxItems": 32
+        },
+        "exports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/export"
+          },
+          "maxItems": 32
+        }
+      }
+    }
+  }
+}

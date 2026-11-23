@@ -39,3 +39,22 @@ test: build/core/test demo
 
 sanitize: build/core/test-sanitize
 	./build/core/test-sanitize
+
+PYTHON ?= python3
+ifeq ($(shell uname -s),Darwin)
+AGENT_LIBRARY = build/core/libnexir-agent.dylib
+AGENT_LINK = -dynamiclib
+else
+AGENT_LIBRARY = build/core/libnexir-agent.so
+AGENT_LINK = -shared
+endif
+
+.PHONY: agent agent-test
+agent: $(AGENT_LIBRARY)
+
+$(AGENT_LIBRARY): $(CORE_SOURCE) $(CORE_HEADERS) tools/agent/bridge.c Makefile
+	mkdir -p build/core
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(CORE_FLAGS) -fPIC $(AGENT_LINK) $(LDFLAGS) $(CORE_SOURCE) tools/agent/bridge.c -o $@
+
+agent-test: agent demo
+	$(PYTHON) tools/agent/test_emitter.py

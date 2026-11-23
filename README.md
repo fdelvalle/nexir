@@ -26,8 +26,7 @@ make demo
 `NxBuilder`, preenche as tabelas tipadas e chama `nx_emit`. Os exemplos C
 fazem chamadas à API para gerar bytes e carregar os módulos com `nx_load`.
 O C usado no gerador é código do host. A linguagem NEXIR não tem etapa
-de compilação a partir de fonte textual. A integração futura para agentes
-usará a API por chamadas estruturadas.
+de compilação a partir de fonte textual. A ferramenta MCP usa a mesma API por chamadas estruturadas.
 
 | Módulo | Comportamento no demo | Bytes da IR |
 | --- | --- | ---: |
@@ -44,3 +43,11 @@ trabalho posterior.
 As decisões de arquitetura estão em [docs/adr](docs/adr). A suíte de
 conformidade cobre encoding canônico, rejeição de bytecode inválido, tipos,
 fluxo de controle, erros de aritmética, orçamento e permissões.
+
+## Emissão direta para agentes
+
+`make agent` compila a ponte para a ferramenta MCP `nexir_emit`.
+Um agente pode solicitar um módulo passando um objeto estruturado, sem
+escrever C ou Python. O servidor devolve o binário canônico em base64
+ou um diagnóstico de validação. Consulte [a configuração e o exemplo
+de chamada](docs/agent-emitter.md) e execute `make agent-test`.
