@@ -8,10 +8,9 @@ tabelas limitadas, o verifier checa o módulo inteiro e a execução recebe um
 `NxModule` opaco produzido pelo loader. O emissor recebe tabelas e operandos
 estruturados por API e aplica o mesmo verifier antes de serializar.
 
-O inspector só renderiza um módulo verificado. A integração futura para
-agentes deve expor operações estruturadas de construção e emissão via
-ferramenta, com diagnóstico por campo, sem exigir que o agente escreva C ou
-Python. A fronteira do módulo verificado também serve como ponto de partida
+O inspector só renderiza um módulo verificado. A ferramenta MCP de
+emissão recebe o módulo em uma chamada estruturada, com diagnóstico de
+autoria. Agentes não precisam escrever C ou Python. A fronteira do módulo verificado também serve como ponto de partida
 para JIT/AOT, com a mesma suíte de conformidade.
 
 NEXIR Applications 0.7 mantém a trilha experimental X11, jogos e formatos

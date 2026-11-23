@@ -1,0 +1,20 @@
+{
+  "module": {
+    "functions": [
+      {
+        "signature": {"params": ["i64", "i64"], "result": "i64"},
+        "blocks": [
+          {
+            "params": ["i64", "i64"],
+            "instructions": [
+              {"op": "i64.add", "args": [0, 1]},
+              {"op": "i64.mul", "args": [2, 1]},
+              {"op": "return", "args": [3]}
+            ]
+          }
+        ]
+      }
+    ],
+    "exports": [{"name": "main", "function": 0}]
+  }
+}
