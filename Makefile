@@ -4,19 +4,25 @@ WARNINGS = -std=c11 -Wall -Wextra -Wpedantic
 X11_CFLAGS ?= $(shell pkg-config --cflags x11)
 X11_LIBS ?= $(shell pkg-config --libs x11)
 CORE = src/parser.c src/engine.c
+APP = runtime.c src/app_parser.c src/app_vm.c
+APP_HEADERS = src/app.h src/app_binary.h
 HEADERS = src/nxg.h src/engine.h
 LEGACY_GAMES = build/legacy/river.nxg build/legacy/river_fast.nxg build/legacy/river_training.nxg
 LEGACY_APPS = build/legacy/wallet.nx build/legacy/calculator.nx build/legacy/toggle.nx
 GAME ?= build/crossing.nxg
 
 .PHONY: all examples legacy-fixtures test sanitize run smoke clean
-all: nexir-runtime nexir-gui examples
+all: nexir-runtime nexir-gui examples legacy-fixtures
 
-nexir-runtime: src/main.c src/parser.c src/nxg.h
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(WARNINGS) $(LDFLAGS) src/main.c src/parser.c -o $@
+build/nexir-validate: src/main.c src/parser.c src/nxg.h $(APP) $(APP_HEADERS)
+	mkdir -p build
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(WARNINGS) $(LDFLAGS) src/main.c src/parser.c $(APP) -o $@
 
-nexir-gui: src/main.c src/x11.c src/frontend.h $(CORE) $(HEADERS)
-	$(CC) $(CPPFLAGS) $(X11_CFLAGS) $(CFLAGS) $(WARNINGS) -DNX_X11 $(LDFLAGS) src/main.c src/x11.c $(CORE) $(X11_LIBS) -o $@
+nexir-runtime: src/main.c src/x11.c src/app_x11.c src/frontend.h $(CORE) $(HEADERS) $(APP) $(APP_HEADERS)
+	$(CC) $(CPPFLAGS) $(X11_CFLAGS) $(CFLAGS) $(WARNINGS) -DNX_X11 $(LDFLAGS) src/main.c src/x11.c src/app_x11.c $(CORE) $(APP) $(X11_LIBS) -o $@
+
+nexir-gui: src/main.c src/x11.c gui.c game_vm.h src/frontend.h $(CORE) $(HEADERS) $(APP) $(APP_HEADERS)
+	$(CC) $(CPPFLAGS) $(X11_CFLAGS) $(CFLAGS) $(WARNINGS) -DNX_X11 -DNX_WORKSPACE $(LDFLAGS) src/main.c src/x11.c gui.c $(CORE) $(APP) $(X11_LIBS) -lm -o $@
 
 examples: build/crossing.nxg build/bounce.nxg
 
@@ -46,14 +52,25 @@ build/legacy/test_game_vm: test_game_vm.c game_vm.h Makefile
 	mkdir -p build/legacy
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(WARNINGS) -UNDEBUG $(LDFLAGS) test_game_vm.c -lm -o $@
 
-test: nexir-runtime build/test-engine examples legacy-fixtures build/legacy/test_game_vm
-	./nexir-runtime --validate build/crossing.nxg
-	./nexir-runtime --validate build/bounce.nxg
+build/test-app: tests/app.c src/app_parser.c src/app_vm.c $(APP_HEADERS) Makefile
+	mkdir -p build
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(WARNINGS) -UNDEBUG -Isrc $(LDFLAGS) tests/app.c src/app_parser.c src/app_vm.c -o $@
+
+build/test-app-sanitize: tests/app.c src/app_parser.c src/app_vm.c $(APP_HEADERS) Makefile
+	mkdir -p build
+	$(CC) $(CPPFLAGS) $(WARNINGS) -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=all -Isrc tests/app.c src/app_parser.c src/app_vm.c -o $@
+
+test: build/nexir-validate build/test-engine build/test-app examples legacy-fixtures build/legacy/test_game_vm
+	./build/nexir-validate --validate build/crossing.nxg
+	./build/nexir-validate --validate build/bounce.nxg
 	./build/test-engine
+	./build/test-app
+	./build/nexir-validate --run-seq build/legacy/toggle.nx 2 2
 	cd build/legacy && ./test_game_vm
 
-sanitize: build/test-engine-sanitize examples
+sanitize: build/test-engine-sanitize build/test-app-sanitize examples legacy-fixtures
 	./build/test-engine-sanitize
+	./build/test-app-sanitize
 
 run: nexir-gui examples
 	./nexir-gui "$(GAME)"
