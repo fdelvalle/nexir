@@ -120,10 +120,32 @@ static void second_game(void)
     assert(frame.background == 0x672d44 && !frame.draws);
 }
 
+static void river(void)
+{
+    NxProgram program = load("build/river_flight.nxg");
+    NxWorld world;
+    nx_start(&world, &program);
+    nx_key(&world, NX_SPACE, true);
+    nx_step(&world);
+    assert(world.entity[7].x == world.entity[3].x + 25 * NX_HZ / 2);
+    assert(world.entity[7].vy == -420);
+    world.entity[6].x = world.entity[3].x;
+    world.entity[6].y = world.entity[3].y;
+    nx_step(&world);
+    assert(world.entity[9].y == 447 * NX_HZ);
+    nx_key(&world, NX_LEFT, true);
+    for (int i = 0; i < NX_HZ; ++i) nx_step(&world);
+    assert(world.scene == 1);
+    nx_key(&world, NX_RESTART, true);
+    nx_step(&world);
+    assert(world.scene == 0 && world.entity[3].x == 305 * NX_HZ);
+}
+
 int main(void)
 {
     parser();
     physics();
     second_game();
+    river();
     puts("NXG7 parser, VM, physics, input and rendering tests passed");
 }

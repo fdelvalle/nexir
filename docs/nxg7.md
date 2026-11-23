@@ -25,7 +25,7 @@ retangular e elipse preenchida. Todas usam seu retângulo delimitador na colisã
 | Tecla solta | 3 | A = tecla, B = 0 |
 | Colisão AABB | 4 | A e B = entidades distintas da cena da regra |
 
-As teclas 0 a 4 são esquerda, direita, cima, baixo e espaço. As transições
+As teclas 0 a 5 são esquerda, direita, cima, baixo, espaço e R. As transições
 capturadas entre ticks são consumidas no tick seguinte. Uma tecla clicada
 inteiramente entre dois ticks pode acionar os eventos de pressionar e soltar
 no mesmo tick.
@@ -35,6 +35,10 @@ no mesmo tick.
 | Definir velocidade | 0 | Alvo = entidade da cena, X/Y em pixels por segundo |
 | Definir posição | 1 | Alvo = entidade da cena, X/Y em pixels |
 | Entrar em cena | 2 | Alvo = cena, X = Y = 0 |
+| Posicionar em relação a uma entidade | 3 | Alvo = entidade movida, X = índice de outra entidade na mesma cena, Y = deslocamento vertical em pixels |
+
+A ação 3 alinha o centro horizontal do alvo ao centro da entidade de referência
+e ajusta sua posição vertical pelo deslocamento Y.
 
 O runtime inicia na cena 0. A cada passo de 1/60 s, executa as regras de tick e
 teclado na ordem do arquivo, integra as velocidades das entidades da cena e

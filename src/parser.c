@@ -27,7 +27,7 @@ static bool in_scene(const NxProgram *p, unsigned id, unsigned scene)
 
 static bool valid_rule(const NxProgram *p, const NxRule *r)
 {
-    if (r->scene >= p->scenes || r->event > NX_COLLISION || r->action > NX_GOTO)
+    if (r->scene >= p->scenes || r->event > NX_COLLISION || r->action > NX_PLACE_NEAR)
         return false;
     switch (r->event) {
     case NX_TICK:
@@ -43,7 +43,11 @@ static bool valid_rule(const NxProgram *p, const NxRule *r)
     }
     if (r->action == NX_GOTO)
         return r->target < p->scenes && !r->x && !r->y;
-    return in_scene(p, r->target, r->scene);
+    if (!in_scene(p, r->target, r->scene)) return false;
+    if (r->action == NX_PLACE_NEAR)
+        return r->x >= 0 && (unsigned)r->x != r->target &&
+               in_scene(p, (unsigned)r->x, r->scene);
+    return true;
 }
 
 bool nx_parse(const uint8_t *bytes, size_t size, NxProgram *out)

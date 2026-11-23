@@ -8,10 +8,10 @@
 
 enum { NX_HZ = 60, NX_WIDTH = 640, NX_HEIGHT = 480,
        NX_SCENES = 16, NX_ENTITIES = 128, NX_RULES = 256 };
-enum NxKey { NX_LEFT, NX_RIGHT, NX_UP, NX_DOWN, NX_SPACE, NX_KEYS };
+enum NxKey { NX_LEFT, NX_RIGHT, NX_UP, NX_DOWN, NX_SPACE, NX_RESTART, NX_KEYS };
 enum NxShape { NX_RECT, NX_OUTLINE, NX_OVAL };
 enum NxEvent { NX_TICK, NX_HELD, NX_PRESS, NX_RELEASE, NX_COLLISION };
-enum NxAction { NX_VELOCITY, NX_POSITION, NX_GOTO };
+enum NxAction { NX_VELOCITY, NX_POSITION, NX_GOTO, NX_PLACE_NEAR };
 
 typedef struct {
     int32_t x, y, vx, vy;

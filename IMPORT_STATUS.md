@@ -1,22 +1,11 @@
 # Importação da NEXIR 0.6
 
-Importação parcial feita pelo ChatGPT diretamente via conector GitHub, sem acesso ao computador local.
+A base inclui `runtime.c`, `gui.c`, `game_vm.h`, `compile.sh`, o teste
+headless original e os geradores `build.py` e `make_game.py`.
 
-## Já publicados
-- `build.py` — gerador dos arquivos `.nx`
-- `make_game.py` — gerador dos arquivos `.nxg`
-- `game_vm.h` — máquina de jogo
-- `compile.sh` — compilação X11
-- `test_game_vm.c` — teste headless
+`make legacy-fixtures` gera os exemplos originais em `build/legacy/`.
 
-## Ainda necessários para compilar
-- `runtime.c`
-- `gui.c`
+- Aplicativos NXIR v3: `wallet.nx`, `calculator.nx` e `toggle.nx`.
+- Jogos NXG6: `river.nxg`, `river_fast.nxg` e `river_training.nxg`.
 
-## Arquivos binários gerados pelos scripts
-- `wallet.nx`, `calculator.nx`, `toggle.nx` — `python3 build.py`
-- `river.nxg`, `river_fast.nxg`, `river_training.nxg` — `python3 make_game.py`
-
-Os executáveis compilados `nexir-gui`, `nexir-runtime` e `test_game_vm` não devem ser versionados.
-
-**Atenção:** a base ainda não compila até que `runtime.c` e `gui.c` sejam importados. Não marcar a issue #1 como concluída antes disso.
+Os executáveis e arquivos gerados ficam fora do controle de versão.

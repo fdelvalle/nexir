@@ -37,6 +37,14 @@ static bool matches(const NxWorld *w, const NxRule *r)
     return false;
 }
 
+static int32_t bounded(int32_t position)
+{
+    const int32_t limit = 32768 * NX_HZ;
+    if (position < -limit) return -limit;
+    if (position > limit) return limit;
+    return position;
+}
+
 static bool dispatch(NxWorld *w, bool collision)
 {
     const NxProgram *p = w->program;
@@ -53,6 +61,10 @@ static bool dispatch(NxWorld *w, bool collision)
         if (r->action == NX_VELOCITY) {
             e->vx = r->x;
             e->vy = r->y;
+        } else if (r->action == NX_PLACE_NEAR) {
+            const NxEntity *source = &w->entity[r->x];
+            e->x = bounded(source->x + ((int32_t)source->width - e->width) * NX_HZ / 2);
+            e->y = bounded(source->y + (int32_t)r->y * NX_HZ);
         } else {
             e->x = (int32_t)r->x * NX_HZ;
             e->y = (int32_t)r->y * NX_HZ;
@@ -61,23 +73,14 @@ static bool dispatch(NxWorld *w, bool collision)
     return false;
 }
 
-static int32_t advance(int32_t position, int32_t velocity)
-{
-    const int32_t limit = 32768 * NX_HZ;
-    int32_t next = position + velocity;
-    if (next < -limit) return -limit;
-    if (next > limit) return limit;
-    return next;
-}
-
 void nx_step(NxWorld *w)
 {
     if (!dispatch(w, false)) {
         for (size_t i = 0; i < w->program->entities; ++i) {
             NxEntity *e = &w->entity[i];
             if (e->scene != w->scene) continue;
-            e->x = advance(e->x, e->vx);
-            e->y = advance(e->y, e->vy);
+            e->x = bounded(e->x + e->vx);
+            e->y = bounded(e->y + e->vy);
         }
         dispatch(w, true);
     }

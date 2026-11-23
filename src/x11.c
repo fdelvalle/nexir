@@ -2,12 +2,10 @@
 #include "engine.h"
 #include "frontend.h"
 #include <X11/XKBlib.h>
-#include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 #include <time.h>
-#include <unistd.h>
 
 typedef struct {
     Display *display;
@@ -61,11 +59,14 @@ static void draw(void *context, const NxEntity *e)
 static enum NxKey translate(KeySym key)
 {
     switch (key) {
+    case XK_a:
     case XK_Left: return NX_LEFT;
+    case XK_d:
     case XK_Right: return NX_RIGHT;
     case XK_Up: return NX_UP;
     case XK_Down: return NX_DOWN;
     case XK_space: return NX_SPACE;
+    case XK_r: return NX_RESTART;
     default: return NX_KEYS;
     }
 }
@@ -129,9 +130,6 @@ int nx_window(const NxProgram *program)
     Atom close = XInternAtom(display, "WM_DELETE_WINDOW", False);
     XSetWMProtocols(display, window, &close, 1);
     XStoreName(display, window, "NEXIR 0.7");
-    unsigned long pid = (unsigned long)getpid();
-    XChangeProperty(display, window, XInternAtom(display, "_NET_WM_PID", False),
-                    XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&pid, 1);
     XSelectInput(display, window, KeyPressMask | KeyReleaseMask | FocusChangeMask);
     XkbSetDetectableAutoRepeat(display, True, NULL);
     XMapWindow(display, window);
