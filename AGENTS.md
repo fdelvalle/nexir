@@ -1,16 +1,22 @@
 # Instruções para agentes de programação — NEXIR
 
 ## Objetivo
-Transformar NEXIR em um runtime binário portátil que suporte aplicações gráficas e jogos escritos como arquivos `.nx`/`.nxg`, sem geração obrigatória de código-fonte humano no runtime.
 
-## Estado e compatibilidade
-- A base conhecida mais recente é NEXIR 0.6, escrita em C11, com backend X11.
-- `runtime.c` implementa a VM de aplicação; `gui.c` implementa shell visual e jogo; `game_vm.h` valida/despacha opcodes NXG6.
-- `build.py`/`make_game.py` geram programas binários de exemplo e não são dependências de execução.
-- Preserve `wallet.nx`, `calculator.nx`, `toggle.nx`, `river.nxg`, `river_fast.nxg`, `river_training.nxg` ou documente claramente qualquer mudança de formato.
+NEXIR é uma linguagem binária tipada para geração direta por agentes. A
+[especificação da IR](docs/ir-v1.md) define a linguagem. O código C11 implementa
+a VM de referência. Mudanças de semântica, formato ou limites devem
+atualizar a especificação e a suíte de conformidade.
 
-## Próximo milestone
-Consulte a [issue #1](https://github.com/fdelvalle/nexir/issues/1) antes de implementar a versão 0.7.
+## Linhas de desenvolvimento
+
+- **Core 1.0** contém o formato, parser, verifier, interpreter, emitter e
+  inspector em `core/`. Use `make core test` e `make sanitize`.
+- **Applications 0.7** contém as experiências de GUI e jogos do
+  [PR #2](https://github.com/fdelvalle/nexir/pull/2). Mantenha X11 e os
+  formatos legados fora do Core.
+- Preserve os exemplos 0.6 listados em [IMPORT_STATUS.md](IMPORT_STATUS.md).
+  Consulte a [issue #1](https://github.com/fdelvalle/nexir/issues/1) para
+  mudanças na linha Applications.
 
 ## Regras
 1. Não introduzir execução de bytes sem validação de limites, tipos e instruções.
