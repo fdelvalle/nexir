@@ -1,0 +1,14 @@
+name: NEXIR
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y libx11-dev xvfb xauth xdotool pkg-config
+      - run: make all
+      - run: make test
+      - run: make sanitize
+      - run: make smoke
