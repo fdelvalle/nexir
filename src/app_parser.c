@@ -57,12 +57,84 @@ static int validate_action(const Action*a){
     }
     return reached_halt?1:fail("missing reachable halt");
 }
-static int load_records(const char*path,Program*p){FILE*f=fopen(path,"rb");if(!f){perror(path);return 0;}uint8_t b[MAX_FILE+1];size_t n=fread(b,1,sizeof(b),f);int read_error=ferror(f);fclose(f);if(read_error)return fail("cannot read file");if(n>MAX_FILE)return fail("file too large");if(n<13||memcmp(b,"NXIR",4)||b[4]!=3)return fail("invalid format/version");size_t pos=5;uint16_t w=u16(b+pos);pos+=2;uint16_t h=u16(b+pos);pos+=2;uint16_t tl=u16(b+pos);pos+=2;if(w<240||w>1600||h<180||h>1000||tl==0||tl>120||pos+tl+2>n)return fail("invalid window");p->width=w;p->height=h;memcpy(p->title,b+pos,tl);p->title[tl]=0;pos+=tl;uint16_t count=u16(b+pos);pos+=2;if(count>MAX_WIDGETS+MAX_ACTIONS+16)return fail("too many records");for(int r=0;r<count;r++){if(pos+3>n)return fail("truncated record");uint8_t kind=b[pos++];uint16_t len=u16(b+pos);pos+=2;if(pos+len>n)return fail("truncated payload");const uint8_t*d=b+pos;pos+=len;if(kind==1){if(len<10||p->nw>=MAX_WIDGETS)return fail("invalid widget");Widget*e=&p->widgets[p->nw++];e->type=d[0];e->id=d[1];e->x=(int16_t)u16(d+2);e->y=(int16_t)u16(d+4);e->w=(int16_t)u16(d+6);e->h=(int16_t)u16(d+8);size_t t=len-10;if(t>MAX_TEXT||e->type<1||e->type>5||(e->type==4&&e->id>=16)||e->w<1||e->h<1)return fail("invalid widget data");memcpy(e->text,d+10,t);e->text[t]=0;}else if(kind==2){if(len<4||p->na>=MAX_ACTIONS)return fail("invalid action");Action*a=&p->actions[p->na++];a->id=d[0];a->length=u16(d+1);if(a->length>MAX_CODE||a->length!=(size_t)len-3)return fail("invalid action length");memcpy(a->code,d+3,a->length);if(!validate_action(a))return 0;}else if(kind==3){if(len!=9||d[0]>=16)return fail("invalid variable");p->vars[d[0]]=i64(d+1);}else return fail("unknown record");}if(pos!=n)return fail("trailing bytes");return 1;}
+static int parse_records(const uint8_t *bytes, size_t n, Program *p)
+{
+    if (n < 13 || memcmp(bytes, "NXIR", 4) || bytes[4] != 3)
+        return fail("invalid format/version");
+    uint16_t width = u16(bytes + 5), height = u16(bytes + 7);
+    uint16_t title_length = u16(bytes + 9);
+    if (width < 240 || width > 1600 || height < 180 || height > 1000 ||
+        !title_length || title_length > MAX_TEXT || 13u + title_length > n)
+        return fail("invalid window");
+    p->width = width;
+    p->height = height;
+    memcpy(p->title, bytes + 11, title_length);
+    uint16_t count = u16(bytes + 11 + title_length);
+    if (count > MAX_WIDGETS + MAX_ACTIONS + 16) return fail("too many records");
+
+    size_t pos = 13 + title_length;
+    for (uint16_t i = 0; i < count; ++i) {
+        if (n - pos < 3) return fail("truncated record");
+        uint8_t kind = bytes[pos];
+        uint16_t length = u16(bytes + pos + 1);
+        pos += 3;
+        if (n - pos < length) return fail("truncated payload");
+        const uint8_t *data = bytes + pos;
+        pos += length;
+        switch (kind) {
+        case 1: {
+            if (length < 10 || p->nw >= MAX_WIDGETS) return fail("invalid widget");
+            Widget *widget = &p->widgets[p->nw++];
+            widget->type = data[0];
+            widget->id = data[1];
+            widget->x = (int16_t)u16(data + 2);
+            widget->y = (int16_t)u16(data + 4);
+            widget->w = (int16_t)u16(data + 6);
+            widget->h = (int16_t)u16(data + 8);
+            size_t text_length = length - 10;
+            if (text_length > MAX_TEXT || widget->type < 1 || widget->type > 5 ||
+                (widget->type == 4 && widget->id >= 16) ||
+                widget->w < 1 || widget->h < 1) return fail("invalid widget data");
+            memcpy(widget->text, data + 10, text_length);
+            break;
+        }
+        case 2: {
+            if (length < 4 || p->na >= MAX_ACTIONS) return fail("invalid action");
+            Action *action = &p->actions[p->na++];
+            action->id = data[0];
+            action->length = u16(data + 1);
+            if (action->length > MAX_CODE || action->length != length - 3)
+                return fail("invalid action length");
+            memcpy(action->code, data + 3, action->length);
+            if (!validate_action(action)) return 0;
+            break;
+        }
+        case 3:
+            if (length != 9 || data[0] >= 16) return fail("invalid variable");
+            p->vars[data[0]] = i64(data + 1);
+            break;
+        default:
+            return fail("unknown record");
+        }
+    }
+    return pos == n ? 1 : fail("trailing bytes");
+}
 
 int app_load(const char *path, Program *program)
 {
     Program candidate = {0};
-    if (!load_records(path, &candidate)) return 0;
+    FILE *file = fopen(path, "rb");
+    if (!file) {
+        perror(path);
+        return 0;
+    }
+    uint8_t bytes[MAX_FILE + 1];
+    size_t count = fread(bytes, 1, sizeof bytes, file);
+    int read_error = ferror(file);
+    fclose(file);
+    if (read_error) return fail("cannot read file");
+    if (count > MAX_FILE) return fail("file too large");
+    if (!parse_records(bytes, count, &candidate)) return 0;
     *program = candidate;
     return 1;
 }
