@@ -1,0 +1,27 @@
+# Built artifacts
+nexir-gui
+nexir-runtime
+test_game_vm
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+build/
+dist/
+
+# Python generators
+__pycache__/
+*.pyc
+.venv/
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/
+
+# Secrets
+.env
+.env.*
+!.env.example
